@@ -1,0 +1,27 @@
+# Base server
+fastapi
+uvicorn[standard]
+
+# Database
+sqlalchemy
+psycopg2-binary
+
+# Scanners
+semgrep
+tree-sitter
+
+# AI & RAG
+openai
+pgvector
+
+# Graph DB (for CPG)
+neo4j
+
+# Utilities
+httpx
+python-dotenv
+google-cloud-tasks
+google-cloud-storage
+
+# Git
+GitPython
