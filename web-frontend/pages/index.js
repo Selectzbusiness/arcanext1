@@ -9,7 +9,7 @@ export default function Home() {
         <h1 className="text-4xl font-bold mb-8 text-center">
           Secure Your Code with Arcanext
         </h1>
-        <Link href="/dashboard">
+        <Link href="/dashboard" legacyBehavior>
           <a className="bg-blue-600 text-white px-6 py-3 rounded text-lg hover:bg-blue-700 transition">
             Go to Dashboard
           </a>
