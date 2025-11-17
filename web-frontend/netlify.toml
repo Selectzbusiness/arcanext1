@@ -1,9 +1,0 @@
-[build]
-  # This tells Netlify that your app is in the 'web-frontend' folder
-  # and your build command is 'npm run build'.
-  # Netlify will run the command from this directory.
-  command = "npm run build"
-
-  # This tells Netlify that the finished, built website
-  # is in the '.next' folder (relative to this file).
-  publish = ".next"

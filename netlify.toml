@@ -1,0 +1,10 @@
+[build]
+  # 1. Tell Netlify to go into your frontend's folder
+  base = "web-frontend"
+
+  # 2. Tell it what command to run
+  command = "npm run build"
+
+  # 3. Tell it where the finished website is
+  # (relative to the 'base' folder)
+  publish = ".next"
