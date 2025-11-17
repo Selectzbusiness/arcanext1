@@ -1,0 +1,23 @@
+# This is the configuration for your Netlify build
+[build]
+  # Tell Netlify that your build command (npm run build)
+  # should be run from inside the "web-frontend" folder.
+  base = "web-frontend"
+
+  # The command to run.
+  command = "npm run build"
+
+  # The folder (relative to 'base') that contains the
+  # finished, built website.
+  publish = ".next"
+
+# This part tells Netlify to use its Next.js plugin,
+# which is essential for routing to work correctly.
+[images]
+  # This is just a dummy setting to make sure Netlify 
+  # correctly identifies this as a Next.js project.
+  remote_patterns = []
+
+[[plugins]]
+  # Explicitly tell Netlify to use its Next.js runtime
+  package = "@netlify/plugin-nextjs"
