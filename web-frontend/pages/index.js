@@ -1,20 +1,25 @@
-import Navbar from "../components/Navbar";
-import Link from "next/link";
+import Head from 'next/head';
+import Header from '../components/Header';
+import Hero from '../components/Hero';
+import Features from '../components/Features';
+import Footer from '../components/Footer';
+import LandingPage from '../components/landing-page';
+import { initToolbar } from '@21st-extension/toolbar';
+
+const stagewiseConfig = {
+  plugins: [],
+};
 
 export default function Home() {
   return (
-    <div>
-      <Navbar />
-      <main className="flex flex-col items-center justify-center min-h-screen py-12">
-        <h1 className="text-4xl font-bold mb-8 text-center">
-          Secure Your Code with Arcanext
-        </h1>
-        <Link href="/dashboard" legacyBehavior>
-          <a className="bg-blue-600 text-white px-6 py-3 rounded text-lg hover:bg-blue-700 transition">
-            Go to Dashboard
-          </a>
-        </Link>
-      </main>
-    </div>
+    <>
+      <Head>
+        <title>Arcanext - AI Security Engineer</title>
+      </Head>
+      <Header />
+      <Hero />
+      <Features />
+      <Footer />
+    </>
   );
 }
