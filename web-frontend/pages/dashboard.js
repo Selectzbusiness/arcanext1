@@ -1,112 +1,124 @@
-
-
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import Navbar from '../components/Navbar'; // Assuming Navbar is in components/Navbar.js
+import Head from 'next/head';
 
 export default function Dashboard() {
   const { currentUser, arcanextUser, loading } = useAuth();
   const router = useRouter();
-
   const [repos, setRepos] = useState([]);
   const [jobs, setJobs] = useState([]);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // 1. Protect the route
     if (!loading && !currentUser) {
       router.push('/');
     }
 
-    // 2. Fetch data only when we have the Arcanext user and token
     if (arcanextUser && currentUser) {
       const fetchData = async () => {
         try {
           const token = await currentUser.getIdToken();
           const headers = { 'Authorization': `Bearer ${token}` };
 
-          // Fetch repositories
           const repoRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/repositories`, { headers });
-          if (!repoRes.ok) throw new Error('Failed to fetch repositories');
-          const repoData = await repoRes.json();
-          setRepos(repoData);
+          if (repoRes.ok) setRepos(await repoRes.json());
 
-          // Fetch jobs
           const jobRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/jobs`, { headers });
-          if (!jobRes.ok) throw new Error('Failed to fetch jobs');
-          const jobData = await jobRes.json();
-          setJobs(jobData);
-
+          if (jobRes.ok) setJobs(await jobRes.json());
         } catch (err) {
-          setError(err.message);
+          console.error(err);
         }
       };
-
       fetchData();
     }
   }, [currentUser, arcanextUser, loading, router]);
 
   if (loading || !currentUser) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-[#0d1117] flex items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <Navbar />
-      <main className="container mx-auto p-8">
-        <h1 className="text-3xl font-bold mb-4">Welcome, {currentUser.email}</h1>
-        <h2 className="text-xl text-gray-400 mb-8">Your Arcanext ID: {arcanextUser?.id}</h2>
+    <>
+      <Head>
+        <title>Dashboard - Arcanext</title>
+      </Head>
 
-        {error && <div className="text-red-500 bg-red-100 border border-red-500 p-4 rounded mb-4">{error}</div>}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Repositories Section */}
-          <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-            <h2 className="text-2xl font-semibold mb-4">Your Repositories</h2>
-            <a
-              href="YOUR_GITHUB_APP_INSTALL_URL" // <-- IMPORTANT: You will get this URL from GitHub
-              className="mb-4 inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded"
-              target="_blank"
-              rel="noopener noreferrer"
+      <div className="min-h-screen bg-[#0d1117]">
+        {/* Header */}
+        <header className="fixed top-0 left-0 right-0 z-50 bg-[#0d1117] border-b border-gray-800">
+          <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <span className="text-xl font-bold text-white">Arcanext Dashboard</span>
+            <button 
+              onClick={() => router.push('/')}
+              className="text-gray-300 hover:text-white px-4 py-2"
             >
-              Install Arcanext GitHub App
-            </a>
-            <ul className="space-y-2">
-              {repos.length > 0 ? (
-                repos.map(repo => (
-                  <li key={repo.id} className="bg-gray-700 p-3 rounded">{repo.repo_name}</li>
-                ))
-              ) : (
-                <li className="text-gray-400">No repositories found. Install the GitHub app.</li>
-              )}
-            </ul>
+              Logout
+            </button>
           </div>
+        </header>
 
-          {/* Scan Jobs Section */}
-          <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-            <h2 className="text-2xl font-semibold mb-4">Recent Scan Jobs</h2>
-            <ul className="space-y-2">
-              {jobs.length > 0 ? (
-                jobs.map(job => (
-                  <li key={job.id} className="bg-gray-700 p-3 rounded">
-                    <div className="font-mono text-sm">Job ID: {job.id}</div>
-                    <div className="text-lg">PR #{job.pr_number}</div>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                      job.status === 'queued' ? 'bg-yellow-500 text-gray-900' :
-                      job.status === 'failed' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
-                    }`}>
-                      {job.status}
-                    </span>
-                  </li>
-                ))
+        <main className="pt-24 px-4 pb-12">
+          <div className="max-w-7xl mx-auto">
+            <h1 className="text-3xl font-bold text-white mb-2">
+              Welcome, {currentUser.email}
+            </h1>
+            <p className="text-gray-400 mb-8">Arcanext ID: {arcanextUser?.id}</p>
+
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-[#161b22] border border-gray-800 rounded-lg p-6">
+                <div className="text-2xl font-bold text-white">{repos.length}</div>
+                <div className="text-sm text-gray-400">Repositories</div>
+              </div>
+              <div className="bg-[#161b22] border border-gray-800 rounded-lg p-6">
+                <div className="text-2xl font-bold text-white">{jobs.length}</div>
+                <div className="text-sm text-gray-400">Scan Jobs</div>
+              </div>
+              <div className="bg-[#161b22] border border-gray-800 rounded-lg p-6">
+                <div className="text-2xl font-bold text-green-400">0</div>
+                <div className="text-sm text-gray-400">Vulnerabilities</div>
+              </div>
+            </div>
+
+            {/* Repositories */}
+            <div className="bg-[#161b22] border border-gray-800 rounded-lg p-6 mb-8">
+              <h2 className="text-2xl font-bold text-white mb-4">Your Repositories</h2>
+              {repos.length > 0 ? (
+                <div className="space-y-2">
+                  {repos.map(repo => (
+                    <div key={repo.id} className="bg-[#0d1117] p-4 rounded-lg border border-gray-800">
+                      <div className="text-white font-medium">{repo.repo_name}</div>
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <li className="text-gray-400">No scan jobs found.</li>
+                <p className="text-gray-400">No repositories found. Install the GitHub app.</p>
               )}
-            </ul>
+            </div>
+
+            {/* Recent Scans */}
+            <div className="bg-[#161b22] border border-gray-800 rounded-lg p-6">
+              <h2 className="text-2xl font-bold text-white mb-4">Recent Scans</h2>
+              {jobs.length > 0 ? (
+                <div className="space-y-2">
+                  {jobs.map(job => (
+                    <div key={job.id} className="bg-[#0d1117] p-4 rounded-lg border border-gray-800">
+                      <div className="text-white">PR #{job.pr_number}</div>
+                      <div className="text-sm text-gray-400">Status: {job.status}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400">No scans yet.</p>
+              )}
+            </div>
           </div>
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </>
   );
 }
