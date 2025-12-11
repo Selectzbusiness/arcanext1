@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
 import { Github, Play, Check, Zap, Lock } from 'lucide-react';
 import Button from '../ui/Button';
 import GradientOrb from '../animations/GradientOrb';
 
 const Hero = () => {
+  const router = useRouter();
   const [typedText, setTypedText] = useState('');
   const fullText = 'Your AI Security Engineer';
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -82,6 +84,7 @@ const Hero = () => {
             size="lg"
             className="w-full sm:w-auto h-14 px-8 text-lg bg-white text-black hover:bg-gray-200 hover:text-black shadow-[0_0_30px_-5px_rgba(255,255,255,0.4)]"
             icon={<Github className="w-5 h-5" />}
+            onClick={() => router.push('/signin')}
           >
             Install GitHub App
           </Button>
@@ -90,6 +93,7 @@ const Hero = () => {
             size="lg"
             className="w-full sm:w-auto h-14 px-8 text-lg border-white/20 hover:bg-white/5 hover:border-white/40 backdrop-blur-sm"
             icon={<Play className="w-5 h-5" />}
+            onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
           >
             View Live Demo
           </Button>

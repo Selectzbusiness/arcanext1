@@ -2,15 +2,18 @@ import os
 import json
 import hmac
 import hashlib
+import httpx
 from fastapi import APIRouter, Request, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from db import get_db
-from models import Repository, ScanJob
+from models import Repository, ScanJob, Workspace
 from queue_service import enqueue_scan_task
 
 router = APIRouter(prefix="/api/v1/webhooks")
 
 GITHUB_WEBHOOK_SECRET = os.environ.get("GITHUB_WEBHOOK_SECRET", "").encode()
+GITHUB_APP_ID = os.environ.get("GITHUB_APP_ID", "")
+GITHUB_APP_PRIVATE_KEY = os.environ.get("GITHUB_APP_PRIVATE_KEY", "")
 
 async def verify_github_signature(request: Request):
     signature = request.headers.get("X-Hub-Signature-256")
@@ -66,3 +69,54 @@ async def handle_github_webhook(request: Request, db: Session = Depends(get_db))
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Failed to enqueue job: {e}")
 
     return {"job_id": str(new_job.id), "status": "queued"}
+
+
+@router.post("/github/installation")
+async def handle_github_installation(request: Request, db: Session = Depends(get_db)):
+    """
+    Handle GitHub App installation webhook.
+    This is called when a user installs the GitHub App on their repositories.
+    """
+    payload = await request.json()
+    action = payload.get("action")
+    
+    if action not in ["created", "added"]:
+        return {"message": f"Ignoring action: {action}"}
+    
+    installation = payload.get("installation", {})
+    installation_id = installation.get("id")
+    
+    # Get the repositories that were added
+    repositories = payload.get("repositories", [])
+    if action == "added":
+        repositories = payload.get("repositories_added", [])
+    
+    if not repositories:
+        return {"message": "No repositories in payload"}
+    
+    # For now, we'll need to associate these repos with a workspace
+    # In production, you'd use the installation_id to look up the user
+    # This is a simplified version - you'd need proper user association
+    
+    added_repos = []
+    for repo in repositories:
+        repo_name = repo.get("full_name")
+        external_id = str(repo.get("id"))
+        
+        # Check if repo already exists
+        existing = db.query(Repository).filter(Repository.external_id == external_id).first()
+        if existing:
+            continue
+        
+        # Note: In production, you need to associate with the correct workspace
+        # This requires storing installation_id -> user mapping
+        added_repos.append({
+            "repo_name": repo_name,
+            "external_id": external_id
+        })
+    
+    return {
+        "message": f"Processed {len(added_repos)} repositories",
+        "installation_id": installation_id,
+        "repositories": added_repos
+    }

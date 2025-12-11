@@ -41,6 +41,12 @@ def read_root():
     return {"message": "Arcanext API"}
 
 
+# Health check endpoint
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "service": "arcanext-api"}
+
+
 # Protected route to verify login and get user data
 @app.get("/api/v1/auth/me")
 def get_current_user_data(current_user: User = Depends(get_or_create_user)):
@@ -51,9 +57,10 @@ def get_current_user_data(current_user: User = Depends(get_or_create_user)):
     It then returns the user's data from our Postgres DB.
     """
     return {
-        "id": current_user.id,
+        "id": str(current_user.id),
         "email": current_user.email,
-        "firebase_uid": current_user.firebase_uid
+        "firebase_uid": current_user.firebase_uid,
+        "created_at": current_user.created_at.isoformat() if current_user.created_at else None
     }
 
 # Register routers

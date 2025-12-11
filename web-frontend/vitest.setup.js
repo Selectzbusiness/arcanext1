@@ -1,13 +1,21 @@
-import { expect, afterEach } from 'vitest';
+/**
+ * Vitest Test Setup
+ * 
+ * This file runs before each test file and sets up:
+ * - DOM cleanup between tests
+ * - Browser API mocks (matchMedia, IntersectionObserver)
+ * - Jest-DOM matchers for better assertions
+ */
+import { afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-// Cleanup after each test
+// Cleanup DOM after each test to prevent test pollution
 afterEach(() => {
   cleanup();
 });
 
-// Mock window.matchMedia for reduced motion tests
+// Mock matchMedia for responsive/animation tests
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: (query) => ({
@@ -22,13 +30,19 @@ Object.defineProperty(window, 'matchMedia', {
   }),
 });
 
-// Mock IntersectionObserver
+// Mock IntersectionObserver for lazy-loading/scroll tests
 global.IntersectionObserver = class IntersectionObserver {
   constructor() {}
   disconnect() {}
   observe() {}
-  takeRecords() {
-    return [];
-  }
+  takeRecords() { return []; }
+  unobserve() {}
+};
+
+// Mock ResizeObserver for responsive component tests
+global.ResizeObserver = class ResizeObserver {
+  constructor() {}
+  disconnect() {}
+  observe() {}
   unobserve() {}
 };

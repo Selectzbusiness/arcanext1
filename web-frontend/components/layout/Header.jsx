@@ -83,12 +83,19 @@ const Header = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-4">
-            <Link href="/dashboard">
-              <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
-                Sign in
-              </Button>
-            </Link>
-            <Button size="sm" className="bg-brand-accent hover:bg-brand-glow text-white border-0 shadow-[0_0_20px_-5px_rgba(124,58,237,0.5)] hover:shadow-[0_0_25px_-5px_rgba(124,58,237,0.7)] transition-all duration-300">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-gray-400 hover:text-white"
+              onClick={() => router.push('/signin')}
+            >
+              Sign in
+            </Button>
+            <Button 
+              size="sm" 
+              className="bg-brand-accent hover:bg-brand-glow text-white border-0 shadow-[0_0_20px_-5px_rgba(124,58,237,0.5)] hover:shadow-[0_0_25px_-5px_rgba(124,58,237,0.7)] transition-all duration-300"
+              onClick={() => router.push('/signin')}
+            >
               Get Started
             </Button>
           </div>
@@ -129,12 +136,25 @@ const Header = () => {
                   </Link>
                 ))}
                 <div className="pt-4 mt-2 border-t border-white/5 flex flex-col gap-3">
-                  <Link href="/dashboard" className="w-full">
-                    <Button variant="ghost" size="sm" className="w-full justify-center text-gray-400 hover:text-white hover:bg-white/5">
-                      Sign in
-                    </Button>
-                  </Link>
-                  <Button size="sm" className="w-full bg-brand-accent hover:bg-brand-glow text-white shadow-lg shadow-brand-accent/20">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full justify-center text-gray-400 hover:text-white hover:bg-white/5"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      router.push('/signin');
+                    }}
+                  >
+                    Sign in
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    className="w-full bg-brand-accent hover:bg-brand-glow text-white shadow-lg shadow-brand-accent/20"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      router.push('/signin');
+                    }}
+                  >
                     Get Started
                   </Button>
                 </div>
