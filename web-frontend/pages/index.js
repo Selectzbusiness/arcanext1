@@ -3,8 +3,6 @@ import dynamic from 'next/dynamic';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import Hero from '../components/sections/Hero';
-import { useAuthRedirect } from '../hooks/useAuthRedirect';
-import Loading from '../components/ui/Loading';
 
 import UnifiedBackground from '../components/layout/UnifiedBackground';
 
@@ -17,16 +15,6 @@ const Pricing = dynamic(() => import('../components/sections/Pricing'));
 const CTA = dynamic(() => import('../components/sections/CTA'));
 
 export default function Home() {
-  // Redirect authenticated users to dashboard
-  const { isRedirecting } = useAuthRedirect({
-    redirectAuthenticated: '/dashboard',
-  });
-
-  // Only show loading if actively redirecting (user is authenticated)
-  if (isRedirecting) {
-    return <Loading fullScreen />;
-  }
-
   return (
     <>
       <Head>

@@ -111,6 +111,31 @@ class APIClient {
     });
   }
 
+  // Fetch user's GitHub repositories using their OAuth token
+  async getGitHubUserRepos(firebaseToken, githubToken) {
+    return this.request('/api/v1/repositories/github/user-repos', {
+      method: 'POST',
+      headers: { 
+        Authorization: `Bearer ${firebaseToken}`,
+      },
+      body: JSON.stringify({ github_token: githubToken }),
+    });
+  }
+
+  // Connect a GitHub repository for scanning
+  async connectGitHubRepo(firebaseToken, repoFullName, githubToken) {
+    return this.request('/api/v1/repositories/github/connect', {
+      method: 'POST',
+      headers: { 
+        Authorization: `Bearer ${firebaseToken}`,
+      },
+      body: JSON.stringify({ 
+        repo_name: repoFullName,
+        github_token: githubToken,
+      }),
+    });
+  }
+
   // Scan job endpoints
   async getScanJobs(token) {
     return this.request('/api/v1/jobs', {

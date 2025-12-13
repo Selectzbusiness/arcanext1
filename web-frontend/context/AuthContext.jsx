@@ -1,6 +1,6 @@
 import { useContext, createContext, useState, useEffect, useCallback } from "react";
 import { auth, githubProvider } from "../lib/firebase";
-import { signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
+import { signInWithPopup, onAuthStateChanged, signOut, GithubAuthProvider } from "firebase/auth";
 
 const AuthContext = createContext();
 
@@ -14,6 +14,8 @@ function getErrorMessage(error) {
       return 'Network error. Please check your connection.';
     case 'auth/unauthorized-domain':
       return 'This domain is not authorized for sign-in.';
+    case 'auth/account-exists-with-different-credential':
+      return 'An account already exists with this email using a different sign-in method.';
     default:
       return 'An error occurred. Please try again.';
   }
@@ -25,6 +27,7 @@ export function AuthProvider({ children }) {
   const [arcanextUser, setArcanextUser] = useState(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [authError, setAuthError] = useState(null);
+  const [githubAccessToken, setGithubAccessToken] = useState(null);
 
   // Clear error function
   const clearError = useCallback(() => {
@@ -59,12 +62,26 @@ export function AuthProvider({ children }) {
     return unsubscribe;
   }, []);
 
-  // Enhanced signinWithGitHub with loading state and error handling
+
+  // GitHub sign-in with loading state and error handling
+  // Captures the GitHub access token for repo operations
   const signinWithGitHub = useCallback(async () => {
     setIsSigningIn(true);
     setAuthError(null);
     try {
       const result = await signInWithPopup(auth, githubProvider);
+      
+      // Get the GitHub OAuth access token for repo operations
+      const credential = GithubAuthProvider.credentialFromResult(result);
+      if (credential) {
+        const token = credential.accessToken;
+        setGithubAccessToken(token);
+        // Store in localStorage for persistence
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('github_access_token', token);
+        }
+      }
+      
       return result;
     } catch (error) {
       const message = getErrorMessage(error);
@@ -83,9 +100,24 @@ export function AuthProvider({ children }) {
       setCurrentUser(null);
       setArcanextUser(null);
       setAuthError(null);
+      setGithubAccessToken(null);
+      // Clear stored tokens
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('github_access_token');
+      }
     } catch (error) {
       console.error('Error during sign out:', error);
       throw error;
+    }
+  }, []);
+
+  // Load GitHub token from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedToken = localStorage.getItem('github_access_token');
+      if (storedToken) {
+        setGithubAccessToken(storedToken);
+      }
     }
   }, []);
 
@@ -97,7 +129,8 @@ export function AuthProvider({ children }) {
     arcanextUser,
     isSigningIn,
     authError,
-    clearError
+    clearError,
+    githubAccessToken,
   };
 
   return (

@@ -16,4 +16,9 @@ function getFirebaseApp() {
 
 export const app = getFirebaseApp();
 export const auth = getAuth(app);
+
+// GitHub provider with repo scopes for scanning
 export const githubProvider = new GithubAuthProvider();
+githubProvider.addScope('read:user');
+githubProvider.addScope('user:email');
+githubProvider.addScope('repo'); // Access to repositories for scanning

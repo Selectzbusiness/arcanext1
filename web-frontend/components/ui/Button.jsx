@@ -32,6 +32,7 @@ const Button = React.forwardRef(({
   return (
     <motion.button
       ref={ref}
+      type="button"
       className={cn(
         'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-200',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background-primary',
