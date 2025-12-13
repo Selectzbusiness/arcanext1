@@ -1,30 +1,59 @@
 import { useEffect, useState, useCallback } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Github, GitBranch, ExternalLink, Plus, RefreshCw, Folder, Zap, Check, Lock, Globe } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Search, Plus, GitBranch, FolderGit2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import AuthGuard from '../../components/auth/AuthGuard';
 import DashboardLayout from '../../components/dashboard/DashboardLayout';
-import Button from '../../components/ui/Button';
 import { apiClient, APIError } from '../../lib/api';
+
+// GitHub Icon
+const GitHubIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+  </svg>
+);
+
+// GitLab Icon
+const GitLabIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M22.65 14.39L12 22.13 1.35 14.39a.84.84 0 0 1-.3-.94l1.22-3.78 2.44-7.51A.42.42 0 0 1 4.82 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.49h8.1l2.44-7.51A.42.42 0 0 1 18.6 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.51L23 13.45a.84.84 0 0 1-.35.94z"/>
+  </svg>
+);
+
+// Empty State Illustration
+function EmptyIllustration() {
+  return (
+    <div className="w-32 h-32 mx-auto mb-6">
+      <svg viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="24" y="40" width="80" height="60" rx="4" stroke="white" strokeWidth="1.5" strokeOpacity="0.2" fill="none" />
+        <rect x="28" y="36" width="72" height="56" rx="4" stroke="white" strokeWidth="1.5" strokeOpacity="0.3" fill="none" />
+        <rect x="32" y="32" width="64" height="52" rx="4" stroke="white" strokeWidth="1.5" strokeOpacity="0.4" fill="none" />
+        <path d="M32 44h64" stroke="white" strokeWidth="1.5" strokeOpacity="0.2" />
+        <circle cx="40" cy="38" r="2" fill="white" fillOpacity="0.3" />
+        <circle cx="48" cy="38" r="2" fill="white" fillOpacity="0.3" />
+        <circle cx="56" cy="38" r="2" fill="white" fillOpacity="0.3" />
+      </svg>
+    </div>
+  );
+}
 
 function RepositoriesContent() {
   const { currentUser, githubAccessToken } = useAuth();
   const router = useRouter();
+  
   const [loading, setLoading] = useState(true);
   const [repositories, setRepositories] = useState([]);
-  const [githubRepos, setGithubRepos] = useState([]);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [loadingGithubRepos, setLoadingGithubRepos] = useState(false);
-  const [connecting, setConnecting] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchRepositories = useCallback(async () => {
     if (!currentUser) return;
     setLoading(true);
+
     try {
       const token = await currentUser.getIdToken();
-      const data = await apiClient.getRepositories(token);
+      const data = await apiClient.getRepositories(token).catch(() => []);
       setRepositories(data);
     } catch (err) {
       if (err instanceof APIError && err.isAuthError) {
@@ -35,275 +64,98 @@ function RepositoriesContent() {
     }
   }, [currentUser, router]);
 
-  const fetchGithubRepos = useCallback(async () => {
-    if (!currentUser || !githubAccessToken) return;
-    setLoadingGithubRepos(true);
-    try {
-      const token = await currentUser.getIdToken();
-      const data = await apiClient.getGitHubUserRepos(token, githubAccessToken);
-      setGithubRepos(data);
-    } catch (err) {
-      console.error('Failed to fetch GitHub repos:', err);
-    } finally {
-      setLoadingGithubRepos(false);
-    }
-  }, [currentUser, githubAccessToken]);
-
   useEffect(() => {
     fetchRepositories();
   }, [fetchRepositories]);
 
-  const handleAddRepository = () => {
-    if (githubAccessToken) {
-      setShowAddModal(true);
-      fetchGithubRepos();
-    } else {
-      // Fallback to GitHub App installation
-      const installUrl = apiClient.getGitHubInstallUrlSync();
-      window.location.href = installUrl;
-    }
-  };
+  const filteredRepos = repositories.filter(repo => 
+    repo.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  const handleConnectRepo = async (repoFullName) => {
-    if (!currentUser || !githubAccessToken) return;
-    setConnecting(repoFullName);
-    try {
-      const token = await currentUser.getIdToken();
-      await apiClient.connectGitHubRepo(token, repoFullName, githubAccessToken);
-      await fetchRepositories();
-      setShowAddModal(false);
-    } catch (err) {
-      console.error('Failed to connect repo:', err);
-    } finally {
-      setConnecting(null);
-    }
-  };
-
-  const connectedRepoNames = repositories.map(r => r.repo_name);
+  const showEmptyState = !loading && repositories.length === 0;
 
   return (
     <>
       <Head>
         <title>Repositories - Arcanext</title>
+        <meta name="description" content="Manage your connected repositories" />
       </Head>
 
       <DashboardLayout 
         activePage="repositories" 
-        title="Repositories" 
-        subtitle="Manage your connected repositories"
+        title="Repositories"
+        breadcrumbs={[{ label: 'Personal', href: '/dashboard' }, { label: 'Repositories' }]}
       >
-        {/* Action Bar */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Button onClick={handleAddRepository} className="bg-violet-500 hover:bg-violet-600">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Repository
-            </Button>
-            <Button variant="outline" onClick={fetchRepositories} disabled={loading}>
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
+        {/* Header Actions */}
+        {!showEmptyState && (
+          <div className="flex items-center justify-between mb-6">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <input
+                type="text"
+                placeholder="Repo not found? Search here..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-white/20"
+              />
+            </div>
+            <button className="flex items-center gap-2 px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg transition-colors">
+              <Plus className="w-4 h-4" />
+              Add Repositories
+            </button>
           </div>
-          <span className="text-gray-400">{repositories.length} repositories connected</span>
-        </div>
+        )}
 
-        {/* Repository Grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="animate-pulse bg-black/40 border border-white/10 rounded-2xl p-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-white/10 rounded-xl" />
-                  <div className="flex-1">
-                    <div className="h-5 w-32 bg-white/10 rounded mb-2" />
-                    <div className="h-4 w-20 bg-white/5 rounded" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : repositories.length === 0 ? (
+        {showEmptyState ? (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-20"
+            className="bg-white/5 border border-white/10 rounded-xl p-12"
           >
-            <div className="relative inline-block mb-6">
-              <div className="absolute inset-0 bg-violet-500/20 rounded-full blur-2xl" />
-              <div className="relative p-6 bg-black/40 border border-white/10 rounded-full">
-                <Folder className="w-12 h-12 text-gray-500" />
+            <div className="flex flex-col items-center justify-center">
+              <EmptyIllustration />
+              <h2 className="text-lg font-medium text-white mb-2">Connect your repositories</h2>
+              <p className="text-gray-400 text-center max-w-md mb-8 text-sm">
+                Connect GitHub or GitLab to manage and scan repositories.
+              </p>
+              <div className="flex items-center gap-3">
+                <button className="flex items-center gap-2 px-4 py-2.5 bg-white text-black text-sm font-medium rounded-lg hover:bg-gray-100 transition-colors">
+                  <GitHubIcon className="w-4 h-4" />
+                  Connect GitHub
+                </button>
+                <button className="flex items-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 text-white text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
+                  <GitLabIcon className="w-4 h-4 text-orange-500" />
+                  Connect GitLab
+                </button>
               </div>
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">No repositories connected</h3>
-            <p className="text-gray-400 mb-6 max-w-md mx-auto">
-              {githubAccessToken 
-                ? "Click 'Add Repository' to connect your GitHub repositories for scanning."
-                : "Connect your GitHub repositories to start scanning for security vulnerabilities."}
-            </p>
-            <Button onClick={handleAddRepository} className="bg-violet-500 hover:bg-violet-600">
-              <Github className="w-5 h-5 mr-2" />
-              {githubAccessToken ? 'Add Repository' : 'Install GitHub App'}
-            </Button>
           </motion.div>
         ) : (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
-          >
-            {repositories.map((repo, index) => (
-              <motion.div
-                key={repo.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                whileHover={{ scale: 1.02, y: -4 }}
-                className="relative overflow-hidden bg-black/40 border border-white/10 rounded-2xl p-6 cursor-pointer hover:border-white/20 transition-all group"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                
-                <div className="relative">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-white/5 border border-white/10 rounded-xl group-hover:border-violet-500/30 transition-colors">
-                        <Github className="w-6 h-6 text-gray-400 group-hover:text-violet-400 transition-colors" />
-                      </div>
+          <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+            {filteredRepos.length > 0 ? (
+              <div className="divide-y divide-white/5">
+                {filteredRepos.map((repo, i) => (
+                  <div key={i} className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <FolderGit2 className="w-5 h-5 text-gray-400" />
                       <div>
-                        <h3 className="font-semibold text-white group-hover:text-violet-300 transition-colors">
-                          {repo.repo_name?.split('/')[1] || repo.repo_name}
-                        </h3>
-                        <p className="text-sm text-gray-500">{repo.repo_name?.split('/')[0]}</p>
+                        <p className="text-sm text-white font-medium">{repo.name}</p>
+                        <p className="text-xs text-gray-500">{repo.full_name || repo.owner}</p>
                       </div>
                     </div>
-                    <a
-                      href={`https://github.com/${repo.repo_name}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
+                    <button className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors">
+                      Scan
+                    </button>
                   </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-2 text-sm text-gray-400">
-                      <span className="w-2 h-2 bg-emerald-400 rounded-full" />
-                      Active
-                    </span>
-                    <span className="flex items-center gap-1 px-2 py-1 bg-emerald-500/10 text-emerald-400 text-xs rounded-full">
-                      <Zap className="w-3 h-3" />
-                      Protected
-                    </span>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-8 text-center">
+                <p className="text-gray-500 text-sm">No repositories match your search.</p>
+              </div>
+            )}
+          </div>
         )}
-
-        {/* Add Repository Modal */}
-        <AnimatePresence>
-          {showAddModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-              onClick={() => setShowAddModal(false)}
-            >
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="w-full max-w-2xl max-h-[80vh] bg-black/90 border border-white/10 rounded-2xl overflow-hidden"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="p-6 border-b border-white/10">
-                  <h2 className="text-xl font-bold text-white">Add Repository</h2>
-                  <p className="text-gray-400 text-sm mt-1">Select a repository to connect for security scanning</p>
-                </div>
-
-                <div className="p-6 overflow-y-auto max-h-[60vh]">
-                  {loadingGithubRepos ? (
-                    <div className="space-y-3">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <div key={i} className="animate-pulse flex items-center gap-4 p-4 bg-white/5 rounded-xl">
-                          <div className="w-10 h-10 bg-white/10 rounded-lg" />
-                          <div className="flex-1">
-                            <div className="h-4 w-40 bg-white/10 rounded mb-2" />
-                            <div className="h-3 w-60 bg-white/5 rounded" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : githubRepos.length === 0 ? (
-                    <div className="text-center py-12">
-                      <Folder className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                      <p className="text-gray-400">No repositories found</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {githubRepos.map((repo) => {
-                        const isConnected = connectedRepoNames.includes(repo.full_name);
-                        return (
-                          <div
-                            key={repo.id}
-                            className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
-                              isConnected 
-                                ? 'bg-emerald-500/10 border-emerald-500/30' 
-                                : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
-                            }`}
-                          >
-                            <div className="p-2 bg-black/30 rounded-lg">
-                              <Github className="w-5 h-5 text-gray-400" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-medium text-white truncate">{repo.name}</h4>
-                                {repo.private ? (
-                                  <Lock className="w-3 h-3 text-amber-400" />
-                                ) : (
-                                  <Globe className="w-3 h-3 text-gray-500" />
-                                )}
-                              </div>
-                              <p className="text-sm text-gray-500 truncate">{repo.full_name}</p>
-                            </div>
-                            {isConnected ? (
-                              <span className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500/20 text-emerald-400 text-sm rounded-lg">
-                                <Check className="w-4 h-4" />
-                                Connected
-                              </span>
-                            ) : (
-                              <Button
-                                size="sm"
-                                onClick={() => handleConnectRepo(repo.full_name)}
-                                disabled={connecting === repo.full_name}
-                                className="bg-violet-500 hover:bg-violet-600"
-                              >
-                                {connecting === repo.full_name ? (
-                                  <RefreshCw className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  'Connect'
-                                )}
-                              </Button>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-4 border-t border-white/10 flex justify-end">
-                  <Button variant="outline" onClick={() => setShowAddModal(false)}>
-                    Close
-                  </Button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </DashboardLayout>
     </>
   );

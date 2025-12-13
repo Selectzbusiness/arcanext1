@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { 
   Shield, Home, Folder, Activity, Settings, LogOut, 
-  ChevronRight, Bell, Search, Command
+  Key, Building2, FileText, Plus, ChevronDown
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { BeamsBackground } from '../ui/BeamsBackground';
@@ -11,114 +11,110 @@ import { BeamsBackground } from '../ui/BeamsBackground';
 // Sidebar Navigation Component
 function Sidebar({ currentUser, onSignOut, activePage }) {
   const navItems = [
-    { icon: Home, label: 'Dashboard', href: '/dashboard', id: 'dashboard' },
+    { icon: Home, label: 'Home', href: '/dashboard', id: 'dashboard' },
+    { icon: FileText, label: 'Custom Rules', href: '/dashboard/rules', id: 'rules' },
     { icon: Folder, label: 'Repositories', href: '/dashboard/repositories', id: 'repositories' },
-    { icon: Activity, label: 'Scans', href: '/dashboard/scans', id: 'scans' },
+    { icon: Key, label: 'API Keys', href: '/dashboard/api-keys', id: 'api-keys' },
+    { icon: Building2, label: 'Organization', href: '/dashboard/organization', id: 'organization' },
     { icon: Settings, label: 'Settings', href: '/dashboard/settings', id: 'settings' },
   ];
 
   return (
     <motion.aside 
-      initial={{ x: -100, opacity: 0 }}
+      initial={{ x: -20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="fixed left-0 top-0 bottom-0 w-72 bg-black/40 backdrop-blur-2xl border-r border-white/10 z-50 flex flex-col"
+      transition={{ duration: 0.3 }}
+      className="fixed left-0 top-0 bottom-0 w-56 bg-[#0a0a0a] border-r border-white/5 z-50 flex flex-col"
     >
-      {/* Logo */}
-      <div className="p-6 border-b border-white/10">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="relative">
-            <div className="absolute inset-0 bg-violet-500 rounded-xl blur-lg opacity-50" />
-            <div className="relative bg-black/50 border border-white/20 p-2.5 rounded-xl">
-              <Shield className="w-6 h-6 text-violet-400" />
-            </div>
+      {/* Organization Selector */}
+      <div className="p-3 border-b border-white/5">
+        <button className="flex items-center gap-2 w-full px-3 py-2 hover:bg-white/5 rounded-lg transition-colors">
+          <div className="w-6 h-6 rounded bg-white/10 flex items-center justify-center">
+            <Shield className="w-4 h-4 text-white" />
           </div>
-          <span className="text-xl font-bold text-white">Arcanext</span>
+          <span className="text-sm font-medium text-white flex-1 text-left">Personal</span>
+          <ChevronDown className="w-4 h-4 text-gray-500" />
+        </button>
+      </div>
+
+      {/* New Scan Button */}
+      <div className="p-3">
+        <Link
+          href="/dashboard/new-scan"
+          className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white text-sm font-medium transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          New Scan
         </Link>
       </div>
 
-      {/* Search Bar */}
-      <div className="p-4">
-        <div className="flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-gray-400 cursor-pointer hover:bg-white/10 transition-colors">
-          <Search className="w-4 h-4" />
-          <span className="text-sm flex-1">Search...</span>
-          <div className="flex items-center gap-1 px-2 py-0.5 bg-white/10 rounded text-xs">
-            <Command className="w-3 h-3" />
-            <span>K</span>
-          </div>
-        </div>
-      </div>
-
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="flex-1 px-3 py-2 space-y-0.5">
         {navItems.map((item) => {
           const isActive = activePage === item.id;
           return (
             <Link
               key={item.label}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-150 ${
                 isActive 
-                  ? 'bg-violet-500/20 text-white border border-violet-500/30' 
+                  ? 'bg-white/10 text-white' 
                   : 'text-gray-400 hover:bg-white/5 hover:text-white'
               }`}
             >
-              <item.icon className={`w-5 h-5 ${isActive ? 'text-violet-400' : ''}`} />
-              <span className="font-medium">{item.label}</span>
-              {isActive && <ChevronRight className="w-4 h-4 ml-auto text-violet-400" />}
+              <item.icon className="w-4 h-4" />
+              <span className="text-sm">{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
       {/* User Section */}
-      <div className="p-4 border-t border-white/10">
-        <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl mb-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center text-white font-bold">
+      <div className="p-3 border-t border-white/5">
+        <div className="flex items-center gap-3 px-3 py-2">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center text-white text-xs font-bold">
             {currentUser?.email?.charAt(0).toUpperCase() || 'U'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate">
-              {currentUser?.displayName || 'User'}
+            <p className="text-sm text-white truncate">
+              {currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User'}
             </p>
-            <p className="text-xs text-gray-400 truncate">{currentUser?.email}</p>
+            <p className="text-xs text-gray-500">Free Tier</p>
           </div>
+          <button
+            onClick={onSignOut}
+            className="p-1.5 text-gray-500 hover:text-white hover:bg-white/5 rounded transition-colors"
+            title="Sign Out"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
-        <button
-          onClick={onSignOut}
-          className="flex items-center gap-3 w-full px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors"
-        >
-          <LogOut className="w-5 h-5" />
-          <span className="font-medium">Sign Out</span>
-        </button>
       </div>
     </motion.aside>
   );
 }
 
-// Top Bar Component
-function TopBar({ title, subtitle }) {
+// Breadcrumb Component
+function Breadcrumb({ items }) {
   return (
-    <motion.header 
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      className="h-16 bg-black/20 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-8"
-    >
-      <div>
-        <h1 className="text-2xl font-bold text-white">{title}</h1>
-        <p className="text-sm text-gray-400">{subtitle}</p>
-      </div>
-      <div className="flex items-center gap-4">
-        <button className="relative p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-violet-500 rounded-full" />
-        </button>
-      </div>
-    </motion.header>
+    <div className="flex items-center gap-2 text-sm">
+      {items.map((item, index) => (
+        <div key={index} className="flex items-center gap-2">
+          {index > 0 && <span className="text-gray-600">›</span>}
+          {item.href ? (
+            <Link href={item.href} className="text-gray-400 hover:text-white transition-colors">
+              {item.label}
+            </Link>
+          ) : (
+            <span className="text-white">{item.label}</span>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
 
-export default function DashboardLayout({ children, activePage, title, subtitle }) {
+export default function DashboardLayout({ children, activePage, title, breadcrumbs }) {
   const { currentUser, signout } = useAuth();
   const router = useRouter();
 
@@ -131,12 +127,23 @@ export default function DashboardLayout({ children, activePage, title, subtitle 
     }
   };
 
+  const defaultBreadcrumbs = [
+    { label: 'Personal', href: '/dashboard' },
+    { label: title }
+  ];
+
   return (
     <BeamsBackground intensity="subtle" className="min-h-screen">
       <Sidebar currentUser={currentUser} onSignOut={handleSignOut} activePage={activePage} />
-      <div className="ml-72 min-h-screen">
-        <TopBar title={title} subtitle={subtitle} />
-        <main className="p-8">
+      <div className="ml-56 min-h-screen">
+        {/* Header */}
+        <header className="px-8 pt-6 pb-4">
+          <Breadcrumb items={breadcrumbs || defaultBreadcrumbs} />
+          <h1 className="text-2xl font-semibold text-white mt-4">{title}</h1>
+        </header>
+        
+        {/* Main Content */}
+        <main className="px-8 pb-8">
           {children}
         </main>
       </div>
