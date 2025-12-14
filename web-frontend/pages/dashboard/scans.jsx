@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
 import { 
   Clock, CheckCircle, XCircle, Loader2, GitPullRequest, 
-  Activity, Filter, RefreshCw, Search
+  Activity, RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import AuthGuard from '../../components/auth/AuthGuard';

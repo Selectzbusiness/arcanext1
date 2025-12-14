@@ -2,8 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { motion } from 'framer-motion';
-import { Folder, Activity, Scan, GitBranch, Zap, Shield, Plus, Upload } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Folder, Activity, Scan, GitBranch, Zap, Shield, Plus, Upload, CheckCircle, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import AuthGuard from '../../components/auth/AuthGuard';
 import DashboardLayout from '../../components/dashboard/DashboardLayout';
@@ -22,6 +22,7 @@ function DashboardContent() {
   const [repositories, setRepositories] = useState([]);
   const [scans, setScans] = useState([]);
   const [stats, setStats] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
 
   const fetchDashboardData = useCallback(async () => {
     if (!currentUser) return;
@@ -53,13 +54,32 @@ function DashboardContent() {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
+  // Handle GitHub App installation callback
   useEffect(() => {
-    const { installation_id, setup_action } = router.query;
-    if (installation_id && setup_action === 'install') {
-      fetchDashboardData();
+    const { installation_id } = router.query;
+    if (installation_id) {
+      // GitHub App was installed - sync repositories from the installation
+      const syncInstallation = async () => {
+        if (!currentUser) return;
+        try {
+          const token = await currentUser.getIdToken();
+          const result = await apiClient.syncGitHubAppInstallation(token, installation_id);
+          setSuccessMessage(`GitHub App installed! ${result.synced_repos?.length || 0} repositories synced.`);
+          // Auto-hide success message after 5 seconds
+          setTimeout(() => setSuccessMessage(null), 5000);
+        } catch (err) {
+          console.error('Failed to sync GitHub App installation:', err);
+          setSuccessMessage('GitHub App installed! Repositories will sync shortly.');
+          setTimeout(() => setSuccessMessage(null), 5000);
+        }
+        // Refresh dashboard data after sync
+        fetchDashboardData();
+      };
+      syncInstallation();
+      // Clean up URL params
       router.replace('/dashboard', undefined, { shallow: true });
     }
-  }, [router.query, fetchDashboardData, router]);
+  }, [router.query, fetchDashboardData, router, currentUser]);
 
   const handleInstallGitHubApp = () => {
     const installUrl = apiClient.getGitHubInstallUrlSync();
@@ -80,6 +100,27 @@ function DashboardContent() {
         title="Dashboard" 
         subtitle="Welcome back! Here's your security overview."
       >
+        {/* Success Message */}
+        <AnimatePresence>
+          {successMessage && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-emerald-400" />
+                <p className="text-emerald-400">{successMessage}</p>
+              </div>
+              <button onClick={() => setSuccessMessage(null)} className="text-emerald-400 hover:text-emerald-300">
+                <X className="w-4 h-4" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Error Message */}
         {error && (
           <motion.div 
             initial={{ opacity: 0, y: -10 }}

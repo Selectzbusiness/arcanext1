@@ -71,7 +71,10 @@
     - _Requirements: 1.1, 2.1, 3.1, 4.1, 5.1, 5.2, 5.3_
 
 
-  - [ ] 3.2 Add GitHub App installation callback handling
+  - [x] 3.2 Add GitHub App installation callback handling
+
+
+
     - Handle `?installation_id` query parameter
 
     - Show success message after installation

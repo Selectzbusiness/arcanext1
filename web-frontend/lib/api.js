@@ -154,6 +154,22 @@ class APIClient {
     return `https://github.com/apps/${GITHUB_APP_NAME}/installations/new`;
   }
 
+  // Sync repositories from a GitHub App installation
+  async syncGitHubAppInstallation(token, installationId) {
+    return this.request('/api/v1/repositories/github/sync-installation', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ installation_id: installationId }),
+    });
+  }
+
+  // Get GitHub App installations for the current user
+  async getGitHubAppInstallations(token) {
+    return this.request('/api/v1/repositories/github/installations', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+
   // Health check
   async healthCheck() {
     return this.request('/health');

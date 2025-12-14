@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Github, GitBranch, ExternalLink, Plus, RefreshCw, Folder, Zap, Check, Lock, Globe } from 'lucide-react';
+import { Github, ExternalLink, Plus, RefreshCw, Folder, Zap, Check, Lock, Globe } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import AuthGuard from '../../components/auth/AuthGuard';
 import DashboardLayout from '../../components/dashboard/DashboardLayout';

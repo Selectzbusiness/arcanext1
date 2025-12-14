@@ -7,3 +7,5 @@ firebase-admin
 
 google-cloud-tasks
 httpx
+PyJWT
+cryptography
