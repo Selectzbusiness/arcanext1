@@ -8,10 +8,15 @@ import { cn } from '../../lib/utils';
 const AnimatedCounter = ({ value, suffix = '', prefix = '', duration = 2 }) => {
   const [count, setCount] = useState(0);
   const [hasAnimated, setHasAnimated] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const ref = useRef();
 
   useEffect(() => {
-    if (hasAnimated) return;
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (hasAnimated || !isMounted) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -45,7 +50,7 @@ const AnimatedCounter = ({ value, suffix = '', prefix = '', duration = 2 }) => {
     }
 
     return () => observer.disconnect();
-  }, [value, duration, hasAnimated]);
+  }, [value, duration, hasAnimated, isMounted]);
 
   const formatNumber = (num) => {
     if (num >= 1000000) {
@@ -55,6 +60,17 @@ const AnimatedCounter = ({ value, suffix = '', prefix = '', duration = 2 }) => {
     }
     return num.toString();
   };
+
+  // Prevent hydration mismatch by showing static value on server
+  if (!isMounted) {
+    return (
+      <span ref={ref}>
+        {prefix}
+        {formatNumber(value)}
+        {suffix}
+      </span>
+    );
+  }
 
   return (
     <span ref={ref}>

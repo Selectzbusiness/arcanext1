@@ -62,8 +62,14 @@ class APIClient {
         if (response.status === 401) {
           throw new APIError('Session expired. Please sign in again.', 401, errorData);
         }
+        if (response.status === 403) {
+          throw new APIError('Access denied. Please check your permissions.', 403, errorData);
+        }
         if (response.status === 404) {
           throw new APIError(errorData?.detail || 'Resource not found.', 404, errorData);
+        }
+        if (response.status === 422) {
+          throw new APIError(errorData?.detail || 'Invalid request data.', 422, errorData);
         }
         if (response.status >= 500) {
           throw new APIError('Server error. Please try again later.', response.status, errorData);
@@ -166,6 +172,26 @@ class APIClient {
   // Get GitHub App installations for the current user
   async getGitHubAppInstallations(token) {
     return this.request('/api/v1/repositories/github/installations', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+
+  // Trigger a security scan
+  async triggerScan(token, repoId, commitSha = 'main', prNumber = null) {
+    return this.request('/api/v1/jobs/scan', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ 
+        repo_id: repoId,
+        commit_sha: commitSha,
+        pr_number: prNumber
+      }),
+    });
+  }
+
+  // Get scan job details
+  async getScanJob(token, jobId) {
+    return this.request(`/api/v1/jobs/${jobId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
   }

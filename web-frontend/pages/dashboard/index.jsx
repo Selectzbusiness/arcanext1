@@ -23,6 +23,7 @@ function DashboardContent() {
   const [scans, setScans] = useState([]);
   const [stats, setStats] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
+  const [isGitHubConnected, setIsGitHubConnected] = useState(false);
 
   const fetchDashboardData = useCallback(async () => {
     if (!currentUser) return;
@@ -39,6 +40,8 @@ function DashboardContent() {
       setRepositories(reposData);
       setScans(scansData);
       setStats(statsData);
+      // Update GitHub connection status based on repositories
+      setIsGitHubConnected(reposData && reposData.length > 0);
     } catch (err) {
       if (err instanceof APIError && err.isAuthError) {
         router.push('/signin');
@@ -65,12 +68,12 @@ function DashboardContent() {
           const token = await currentUser.getIdToken();
           const result = await apiClient.syncGitHubAppInstallation(token, installation_id);
           setSuccessMessage(`GitHub App installed! ${result.synced_repos?.length || 0} repositories synced.`);
+          setIsGitHubConnected(true);
           // Auto-hide success message after 5 seconds
           setTimeout(() => setSuccessMessage(null), 5000);
         } catch (err) {
           console.error('Failed to sync GitHub App installation:', err);
-          setSuccessMessage('GitHub App installed! Repositories will sync shortly.');
-          setTimeout(() => setSuccessMessage(null), 5000);
+          setError(`Failed to sync repositories: ${err.message || 'Please try again'}`);
         }
         // Refresh dashboard data after sync
         fetchDashboardData();
@@ -151,15 +154,28 @@ function DashboardContent() {
             New Scan
           </button>
           
-          <button 
-            onClick={handleInstallGitHubApp}
-            className="group flex items-center gap-3 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-violet-500/50 rounded-xl text-white font-medium transition-all duration-300"
-          >
-            <div className="p-1.5 bg-white/10 rounded-lg group-hover:bg-violet-500/20 transition-colors">
-              <GitBranch className="w-4 h-4 text-gray-400 group-hover:text-violet-400 transition-colors" />
+          {/* Only show Connect GitHub button if not connected */}
+          {!isGitHubConnected && (
+            <button 
+              onClick={handleInstallGitHubApp}
+              className="group flex items-center gap-3 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-violet-500/50 rounded-xl text-white font-medium transition-all duration-300"
+            >
+              <div className="p-1.5 bg-white/10 rounded-lg group-hover:bg-violet-500/20 transition-colors">
+                <GitBranch className="w-4 h-4 text-gray-400 group-hover:text-violet-400 transition-colors" />
+              </div>
+              Connect GitHub
+            </button>
+          )}
+          
+          {/* Show GitHub connected status if connected */}
+          {isGitHubConnected && (
+            <div className="flex items-center gap-3 px-6 py-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 font-medium">
+              <div className="p-1.5 bg-emerald-500/20 rounded-lg">
+                <CheckCircle className="w-4 h-4" />
+              </div>
+              GitHub Connected
             </div>
-            Connect GitHub
-          </button>
+          )}
           
           <button className="group flex items-center gap-3 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-cyan-500/50 rounded-xl text-white font-medium transition-all duration-300">
             <div className="p-1.5 bg-white/10 rounded-lg group-hover:bg-cyan-500/20 transition-colors">

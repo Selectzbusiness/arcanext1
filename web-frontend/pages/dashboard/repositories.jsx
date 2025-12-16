@@ -18,6 +18,8 @@ function RepositoriesContent() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [loadingGithubRepos, setLoadingGithubRepos] = useState(false);
   const [connecting, setConnecting] = useState(null);
+  const [scanning, setScanning] = useState(null);
+  const [scanSuccess, setScanSuccess] = useState(null);
 
   const fetchRepositories = useCallback(async () => {
     if (!currentUser) return;
@@ -53,14 +55,22 @@ function RepositoriesContent() {
     fetchRepositories();
   }, [fetchRepositories]);
 
-  const handleAddRepository = () => {
+  const handleAddRepository = async () => {
     if (githubAccessToken) {
       setShowAddModal(true);
       fetchGithubRepos();
     } else {
       // Fallback to GitHub App installation
-      const installUrl = apiClient.getGitHubInstallUrlSync();
-      window.location.href = installUrl;
+      try {
+        const token = await currentUser.getIdToken();
+        const data = await apiClient.getGitHubInstallUrl(token);
+        window.location.href = data.url;
+      } catch (err) {
+        console.error('Failed to get install URL:', err);
+        // Fallback to direct URL
+        const installUrl = apiClient.getGitHubInstallUrlSync();
+        window.location.href = installUrl;
+      }
     }
   };
 
@@ -79,6 +89,22 @@ function RepositoriesContent() {
     }
   };
 
+  const handleScanRepo = async (repoId, repoName) => {
+    if (!currentUser) return;
+    setScanning(repoId);
+    try {
+      const token = await currentUser.getIdToken();
+      const result = await apiClient.triggerScan(token, repoId);
+      setScanSuccess(`Scan started for ${repoName}! Job ID: ${result.job_id}`);
+      setTimeout(() => setScanSuccess(null), 5000);
+    } catch (err) {
+      console.error('Failed to start scan:', err);
+      alert(`Failed to start scan: ${err.message || 'Please try again'}`);
+    } finally {
+      setScanning(null);
+    }
+  };
+
   const connectedRepoNames = repositories.map(r => r.repo_name);
 
   return (
@@ -92,6 +118,18 @@ function RepositoriesContent() {
         title="Repositories" 
         subtitle="Manage your connected repositories"
       >
+        {/* Success Message */}
+        {scanSuccess && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-3"
+          >
+            <CheckCircle className="w-5 h-5 text-emerald-400" />
+            <p className="text-emerald-400">{scanSuccess}</p>
+          </motion.div>
+        )}
+
         {/* Action Bar */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
@@ -191,10 +229,24 @@ function RepositoriesContent() {
                       <span className="w-2 h-2 bg-emerald-400 rounded-full" />
                       Active
                     </span>
-                    <span className="flex items-center gap-1 px-2 py-1 bg-emerald-500/10 text-emerald-400 text-xs rounded-full">
-                      <Zap className="w-3 h-3" />
-                      Protected
-                    </span>
+                    <Button
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleScanRepo(repo.id, repo.repo_name);
+                      }}
+                      disabled={scanning === repo.id}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 text-xs"
+                    >
+                      {scanning === repo.id ? (
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <>
+                          <Zap className="w-3 h-3 mr-1" />
+                          Scan Now
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </div>
               </motion.div>

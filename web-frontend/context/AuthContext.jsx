@@ -1,6 +1,6 @@
 import { useContext, createContext, useState, useEffect, useCallback } from "react";
 import { auth, githubProvider } from "../lib/firebase";
-import { signInWithPopup, onAuthStateChanged, signOut, GithubAuthProvider } from "firebase/auth";
+import { signInWithPopup, onAuthStateChanged, signOut, GithubAuthProvider, setPersistence, browserLocalPersistence } from "firebase/auth";
 
 const AuthContext = createContext();
 
@@ -34,6 +34,19 @@ export function AuthProvider({ children }) {
     setAuthError(null);
   }, []);
 
+  // Set Firebase persistence to LOCAL on mount
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        // Ensure Firebase persists auth state in localStorage
+        await setPersistence(auth, browserLocalPersistence);
+      } catch (error) {
+        console.error('Failed to set auth persistence:', error);
+      }
+    };
+    initAuth();
+  }, []);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
@@ -41,7 +54,8 @@ export function AuthProvider({ children }) {
       if (user) {
         try {
           const token = await user.getIdToken();
-          const response = await fetch("http://127.0.0.1:8000/api/v1/auth/me", {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+          const response = await fetch(`${apiUrl}/api/v1/auth/me`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -53,10 +67,12 @@ export function AuthProvider({ children }) {
             console.error('Failed to fetch Arcanext user:', response.status, await response.text());
           }
         } catch (error) {
-          console.error('Error during backend handshake:', error);
+          console.warn('Backend API not available:', error.message);
+          // Continue without backend - user can still use OAuth features
         }
       } else {
         setArcanextUser(null);
+        setGithubAccessToken(null);
       }
     });
     return unsubscribe;
@@ -69,6 +85,9 @@ export function AuthProvider({ children }) {
     setIsSigningIn(true);
     setAuthError(null);
     try {
+      // Ensure persistence is set before sign-in
+      await setPersistence(auth, browserLocalPersistence);
+      
       const result = await signInWithPopup(auth, githubProvider);
       
       // Get the GitHub OAuth access token for repo operations
